@@ -22,17 +22,11 @@ public class Client extends Thread {
 	public void run() {
 
 		try {
-			Socket socket = null;
-			ObjectOutputStream oos = null;
-			ObjectInputStream ois = null;
-			socket = new Socket(this.ip, this.port);
-			System.out.println("Tamanho do caminho " + object.bestPath.size());
-			System.out.println(object.source);
-			oos = new ObjectOutputStream(socket.getOutputStream());
-			System.out.println("Sending request to Server");
-			System.out.println("Custo atual " + this.object.cost);
+			Socket socket = new Socket(this.ip, this.port);
+			ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
+			ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
 			oos.writeObject(this.object);
-			ois = new ObjectInputStream(socket.getInputStream());
+			oos.flush();
 			BestPath message = (BestPath) ois.readObject();
 			synchronized (bestPath) {
 				if (message.cost < bestPath.cost) {

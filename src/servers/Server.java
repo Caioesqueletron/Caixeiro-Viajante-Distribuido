@@ -22,25 +22,21 @@ public class Server {
 
 	public static void main(String[] args) throws ClassNotFoundException {
 		Scanner scanner = new Scanner(System.in);
-		System.out.println("Digite a porta que esta rodando: ");
+		System.out.println("Which port will run the server: ");
 		int porta = scanner.nextInt();
 		try {
 			ServerSocket ss = new ServerSocket(porta);
 
 			do {
-				System.out.println("Waiting for the client request");
 				Socket socket = ss.accept();
+				ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
 				ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
 				ObjectSocket message = (ObjectSocket) ois.readObject();
-				System.out.println("Message Received");
-				ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
 				BestPath bestPath = searchForBestPath(message.city, message.fisrtSource, message.source, message.visitedVertex, message.cost, message.bestPath,message.path);
-				System.out.println(bestPath.cost);
 				oos.writeObject(bestPath);
-				// close resources
-				ois.close();
+				oos.flush();
 				oos.close();
-
+				ois.close();
 			} while (true);
 
 		} catch (IOException ex) {
@@ -53,9 +49,7 @@ public class Server {
 
 	public static BestPath searchForBestPath(int grafo[][], int source, int currentVertex, boolean[] visitedVertex,
 			int cost, ArrayList<Integer> bestPath, BestPath path) {
-		System.out.println("Custo atual  " + cost );
-		System.out.println("Tamanho do caminho" + bestPath.size());
-
+	
 		List<Integer> adjVertex = searchForAdjVertex(grafo, currentVertex);
 
 		if (allVisited(visitedVertex.length, visitedVertex)) {
@@ -66,6 +60,7 @@ public class Server {
 				
 				if (cost < path.cost) {
 					path.cost = cost;
+					System.out.println("Best cost changed: " + path.cost);
 					path.bestPath.clear();
 					for (int k = 0; k < bestPath.size(); k++) {
 						path.bestPath.add(bestPath.get(k));
@@ -89,7 +84,6 @@ public class Server {
 					if (adjVertex.get(i) != source) {
 						bestPath.add(adjVertex.get(i));
 					}
-					System.out.println("Custo atual do melhor custo " + path.cost );
 
 					path = searchForBestPath(grafo, source, adjVertex.get(i), visitedVertex,
 							(cost + grafo[currentVertex][adjVertex.get(i)]), bestPath, path);

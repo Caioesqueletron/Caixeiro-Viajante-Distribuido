@@ -26,27 +26,41 @@ public class Coordenator {
 		ArrayList<Integer> bestPath = new ArrayList<Integer>();
 		ArrayList<Client> threads = new ArrayList<Client>();
 		int treeDepth = 0;
+		int nServers = 0;
 
 		Scanner sc = new Scanner(System.in);
-		System.out.println("Digite quantos servidores voce precisa de 1 a 5");
-		int nServers = sc.nextInt();
+		do {
+			if (nServers > 5) {
+				System.out.println("Server amount not alowed. Insert again from 1 to 5: ");
+				nServers = sc.nextInt();
+
+			} else {
+				System.out.println("How many servers do you need from 1 to 5 ?");
+
+				nServers = sc.nextInt();
+			}
+
+		} while (nServers > 5);
 
 		for (int j = 0; j < nServers; j++) {
-			System.out.println("Digite o ip do servidor: ");
+			System.out.println("Insert the server's ip: ");
 			ip = sc.next();
-			System.out.println("Digite a porta que esta rodando: ");
+			System.out.println("Which port is running the server: ");
 			port = sc.nextInt();
 			threads.add(new Client(port, ip));
 
 		}
 
-		Graph graph = new Graph(5, "Cidade1.txt");
-		graph.createMakeGraph();
-		int[][] city = new int[5][5];
-		city = graph.getGraph();
-		visitedVertex = new boolean[5];
+		System.out.println("Insert the number of cities: ");
+		int nVertex = sc.nextInt();
 
-		for (int i = 0; i < 5; i++) {
+		Graph graph = new Graph(nVertex, "Cidade2.txt");
+		graph.createMakeGraph();
+		int[][] city = new int[nVertex][nVertex];
+		city = graph.getGraph();
+		visitedVertex = new boolean[nVertex];
+
+		for (int i = 0; i < nVertex; i++) {
 			visitedVertex[i] = false;
 		}
 
@@ -64,9 +78,7 @@ public class Coordenator {
 			int cost, int bestCost, ArrayList<Integer> bestPath, BestPath path, int depthTree,
 			ArrayList<Client> threads) throws ClassNotFoundException, IOException, InterruptedException {
 
-		if(threads.get(0).isAlive()) {
-			System.out.println("Thread rodando");
-		}
+		System.out.println("Best current cost: " + path.cost);
 		List<Integer> adjVertex = searchForAdjVertex(grafo, currentVertex);
 
 		visitedVertex[currentVertex] = true;
@@ -97,26 +109,20 @@ public class Coordenator {
 						object.visitedVertex = copyVisitedVertex;
 						object.fisrtSource = source;
 						object.source = adjVertex.get(i);
-						System.out.println(adjVertex.get(i));
 
-						if (areAllThreadRunning(threads)) {
-						System.out.println("Waiting the threads finish their jobs...");
-							for (int k = 0; k < threads.size(); k++) {
-								threads.get(k).join();
-							}
-							for (int k = 0; k < threads.size(); k++) {
-								threads.set(k, new Client(threads.get(k).getPort(),threads.get(k).getIp()));
-							}
-							
+						while (areAllThreadRunning(threads)) {
+
 						}
 
 						for (int k = 0; k < threads.size(); k++) {
 							if (!threads.get(k).isAlive()) {
-								System.out.println("Executing thread " + k);
+								System.out.println("Executing thread: " + k + " from city: " + object.source);
+								threads.set(k, new Client(threads.get(k).getPort(), threads.get(k).getIp()));
 								threads.get(k).setObject(object);
 								threads.get(k).setBestPath(path);
 								threads.get(k).start();
-								
+								break;
+
 							}
 
 						}
@@ -129,11 +135,11 @@ public class Coordenator {
 					bestPath.remove(adjVertex.get(i));
 					visitedVertex[adjVertex.get(i)] = false;
 
-
 				}
 			}
 		}
 		if (depthTree == 0) {
+			System.out.println("Finishing threads jobs...");
 			for (int k = 0; k < threads.size(); k++) {
 				if (threads.get(k).isAlive()) {
 					threads.get(k).join();
@@ -143,16 +149,6 @@ public class Coordenator {
 
 		return path;
 
-	}
-
-	public static boolean allVisited(int nVertices, boolean[] verticesVisitados) {
-		int aux = 0;
-		for (int i = 0; i < nVertices; i++) {
-			if (verticesVisitados[i]) {
-				aux++;
-			}
-		}
-		return aux == nVertices ? true : false;
 	}
 
 	public static boolean areAllThreadRunning(ArrayList<Client> threads) {
