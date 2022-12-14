@@ -7,12 +7,12 @@ import bestPath.BestPath;
 
 public class ObjectSocket implements Serializable{
 	private static final long serialVersionUID = 5864263074889752646L;
-	public int cost = 0;
-	public boolean[] visitedVertex = null;
-	public int city[][] = null;
-	public int source = 0;
-	public int fisrtSource = 0;
-	public BestPath path;
+	private int cost = 0;
+	private boolean[] visitedVertex = null;
+	private int city[][] = null;
+	private int source = 0;
+	private int fisrtSource = 0;
+	private BestPath path;
 	public ArrayList<Integer> bestPath = new ArrayList<Integer>();
 	public int getCost() {
 		return cost;

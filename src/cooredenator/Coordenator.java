@@ -1,6 +1,7 @@
 package cooredenator;
 
 import java.io.IOException;
+import java.lang.Thread.State;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -68,8 +69,8 @@ public class Coordenator {
 		BestPath goodPath = searchForBestPath(city, source, sourceFirst, visitedVertex, cost, bestCost, bestPath,
 				melhorVertice, treeDepth, threads);
 
-		System.out.println("Best path: " + goodPath.bestPath);
-		System.out.println("Best cost: " + goodPath.cost);
+		System.out.println("Best path: " + goodPath.getBestPath());
+		System.out.println("Best cost: " + goodPath.getCost());
 		sc.close();
 
 	}
@@ -77,47 +78,51 @@ public class Coordenator {
 	public static BestPath searchForBestPath(int grafo[][], int source, int currentVertex, boolean[] visitedVertex,
 			int cost, int bestCost, ArrayList<Integer> bestPath, BestPath path, int depthTree,
 			ArrayList<Client> threads) throws ClassNotFoundException, IOException, InterruptedException {
-
-		System.out.println("Best current cost: " + path.cost);
+		
+		if(path.getCost() != Integer.MAX_VALUE) {
+			System.out.println("Best current cost: " + path.getCost());
+		}
 		List<Integer> adjVertex = searchForAdjVertex(grafo, currentVertex);
 
 		visitedVertex[currentVertex] = true;
 
 		for (int i = 0; i < adjVertex.size(); i++) {
 			if (!visitedVertex[adjVertex.get(i)]) {
-				if (cost + grafo[currentVertex][adjVertex.get(i)] < path.cost) {
+				if (cost + grafo[currentVertex][adjVertex.get(i)] < path.getCost()) {
 					visitedVertex[adjVertex.get(i)] = true;
 					if (adjVertex.get(i) != source) {
 						bestPath.add(adjVertex.get(i));
 					}
-					if (depthTree >= 3) {
+					if (depthTree >= 2) {
 
-						ObjectSocket object = new ObjectSocket();
-						ArrayList<Integer> copyBestPath = new ArrayList<Integer>();
-						boolean[] copyVisitedVertex = new boolean[visitedVertex.length];
-						for (int j = 0; j < bestPath.size(); j++) {
-							copyBestPath.add(bestPath.get(j));
-						}
-						for (int j = 0; j < visitedVertex.length; j++) {
-							copyVisitedVertex[j] = visitedVertex[j];
-
-						}
-						object.bestPath = copyBestPath;
-						object.path = path;
-						object.city = grafo;
-						object.cost = cost + grafo[currentVertex][adjVertex.get(i)];
-						object.visitedVertex = copyVisitedVertex;
-						object.fisrtSource = source;
-						object.source = adjVertex.get(i);
-
-						while (areAllThreadRunning(threads)) {
-
-						}
+						areAllThreadRunning(threads);
 
 						for (int k = 0; k < threads.size(); k++) {
-							if (!threads.get(k).isAlive()) {
-								System.out.println("Executing thread: " + k + " from city: " + object.source);
+							
+							if (threads.get(k).getState() == State.TERMINATED
+									|| threads.get(k).getState() == State.NEW ) {
+								ObjectSocket object = new ObjectSocket();
+								ArrayList<Integer> copyBestPath = new ArrayList<Integer>();
+								boolean[] copyVisitedVertex = new boolean[visitedVertex.length];
+								for (int j = 0; j < bestPath.size(); j++) {
+									copyBestPath.add(bestPath.get(j));
+								}
+								for (int j = 0; j < visitedVertex.length; j++) {
+									copyVisitedVertex[j] = visitedVertex[j];
+
+								}
+								object.setBestPath(copyBestPath);
+								object.setPath(path);
+								object.setCity(grafo);
+								object.setCost(cost + grafo[currentVertex][adjVertex.get(i)]);
+								object.setVisitedVertex(copyVisitedVertex);
+								object.setFisrtSource(source);
+								object.setSource(adjVertex.get(i));
+								
+								System.out.println("Executing thread: " + k + " from city: " + object.getSource());
+								if(threads.get(k).getState() != State.NEW) {
 								threads.set(k, new Client(threads.get(k).getPort(), threads.get(k).getIp()));
+								}
 								threads.get(k).setObject(object);
 								threads.get(k).setBestPath(path);
 								threads.get(k).start();
@@ -129,7 +134,7 @@ public class Coordenator {
 
 					} else {
 						path = searchForBestPath(grafo, source, adjVertex.get(i), visitedVertex,
-								(cost + grafo[currentVertex][adjVertex.get(i)]), path.cost, bestPath, path,
+								(cost + grafo[currentVertex][adjVertex.get(i)]), path.getCost(), bestPath, path,
 								depthTree + 1, threads);
 					}
 					bestPath.remove(adjVertex.get(i));
@@ -141,7 +146,7 @@ public class Coordenator {
 		if (depthTree == 0) {
 			System.out.println("Finishing threads jobs...");
 			for (int k = 0; k < threads.size(); k++) {
-				if (threads.get(k).isAlive()) {
+				if (threads.get(k).getState() != State.TERMINATED ) {
 					threads.get(k).join();
 				}
 			}
@@ -151,19 +156,22 @@ public class Coordenator {
 
 	}
 
-	public static boolean areAllThreadRunning(ArrayList<Client> threads) {
-		int isAllRunning = 0;
-		for (int i = 0; i < threads.size(); i++) {
-			if (threads.get(i).isAlive()) {
-				isAllRunning++;
+	public static void areAllThreadRunning(ArrayList<Client> threads) {
+		int block = 0;
+		while (block == 0) {
+			int isAllRunning = 0;
+			for (int i = 0; i < threads.size(); i++) {
+				if (threads.get(i).getState() != State.TERMINATED && threads.get(i).getState() != State.NEW) {
+					isAllRunning++;
+				}
+			}
+			if (isAllRunning == threads.size()) {
+				block = 0;
+			} else {
+				block = 1;
 			}
 		}
-		if (isAllRunning == threads.size()) {
-			return true;
-
-		} else {
-			return false;
-		}
+		return;
 	}
 
 	private static List<Integer> searchForAdjVertex(int graph[][], int verticeAtual) {

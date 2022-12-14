@@ -24,23 +24,27 @@ public class Client extends Thread {
 		try {
 			Socket socket = new Socket(this.ip, this.port);
 			ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
-			ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
-			oos.writeObject(this.object);
+			oos.writeObject(getObject());
 			oos.flush();
-			BestPath message = (BestPath) ois.readObject();
+			BestPath message = null;
+			ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
+			message = (BestPath) ois.readObject();
+			System.out.println("Cost received: " + message.getCost());
 			synchronized (bestPath) {
-				if (message.cost < bestPath.cost) {
-					bestPath.setCost(message.cost);
-					bestPath.setBestPath(message.bestPath);
+					if (message.getCost() < bestPath.getCost()) {
+						bestPath.setCost(message.getCost());
+						bestPath.setBestPath(message.getBestPath());
+					}
 				}
-			}
-			ois.close();
 			oos.close();
+			ois.close();
 			socket.close();
-
+			
 		} catch (Exception e) {
 			System.out.println(e.getMessage());
 		}
+		
+		
 
 	}
 

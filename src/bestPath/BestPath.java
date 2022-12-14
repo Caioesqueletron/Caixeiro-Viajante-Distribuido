@@ -5,7 +5,7 @@ import java.util.ArrayList;
 
 public class BestPath implements Serializable{
 	private static final long serialVersionUID = -1006817289069012637L;
-	public int cost = Integer.MAX_VALUE;
+	private int cost = Integer.MAX_VALUE;
 	
 	public ArrayList<Integer> bestPath = new ArrayList<Integer>();
 	public int getCost() {

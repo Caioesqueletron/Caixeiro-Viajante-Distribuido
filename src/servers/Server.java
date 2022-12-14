@@ -25,20 +25,23 @@ public class Server {
 		System.out.println("Which port will run the server: ");
 		int porta = scanner.nextInt();
 		try {
-			ServerSocket ss = new ServerSocket(porta);
-
-			do {
+			
+			while(true) {
+				ServerSocket ss = new ServerSocket(porta);
 				Socket socket = ss.accept();
-				ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
 				ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
 				ObjectSocket message = (ObjectSocket) ois.readObject();
-				BestPath bestPath = searchForBestPath(message.city, message.fisrtSource, message.source, message.visitedVertex, message.cost, message.bestPath,message.path);
+				BestPath bestPath = searchForBestPath(message.getCity(), message.getFisrtSource(), message.getSource(), message.getVisitedVertex(), message.getCost(), message.bestPath,message.getPath());
+				ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
 				oos.writeObject(bestPath);
 				oos.flush();
+				System.out.println("Finishing calculating best cost: "+ bestPath.getCost());
 				oos.close();
 				ois.close();
-			} while (true);
-
+				socket.close();
+				ss.close();
+			}
+			
 		} catch (IOException ex) {
 			Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
 		}
@@ -58,9 +61,9 @@ public class Server {
 				cost += grafo[currentVertex][source];
 				bestPath.add(source);
 				
-				if (cost < path.cost) {
-					path.cost = cost;
-					System.out.println("Best cost changed: " + path.cost);
+				if (cost < path.getCost()) {
+					path.setCost(cost);
+					System.out.println("Best cost changed: " + path.getCost());
 					path.bestPath.clear();
 					for (int k = 0; k < bestPath.size(); k++) {
 						path.bestPath.add(bestPath.get(k));
@@ -79,7 +82,7 @@ public class Server {
 
 		for (int i = 0; i < adjVertex.size(); i++) {
 			if (!visitedVertex[adjVertex.get(i)]) {
-				if (cost + grafo[currentVertex][adjVertex.get(i)] < path.cost) {
+				if (cost + grafo[currentVertex][adjVertex.get(i)] < path.getCost()) {
 					visitedVertex[adjVertex.get(i)] = true;
 					if (adjVertex.get(i) != source) {
 						bestPath.add(adjVertex.get(i));
